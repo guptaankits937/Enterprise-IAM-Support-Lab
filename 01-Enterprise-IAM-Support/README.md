@@ -2,93 +2,56 @@
 
 ## Overview
 
-This project demonstrates a practical enterprise-style Identity and Access Management (IAM) support environment using Keycloak, Ubuntu Server, Python, Flask, and OpenID Connect.
+This project demonstrates a practical Identity and Access Management (IAM) environment built with Keycloak and two Flask test applications.
 
-The objective was to build and troubleshoot common IAM workflows including user and group administration, Role-Based Access Control (RBAC), least privilege, Joiner-Mover-Leaver identity lifecycle management, Multi-Factor Authentication (MFA), OIDC application integration, role-based authorization, Single Sign-On (SSO), and IAM event investigation.
+The lab was designed to develop hands-on experience with identity administration, Role-Based Access Control (RBAC), Joiner-Mover-Leaver lifecycle management, Multi-Factor Authentication (MFA), OpenID Connect (OIDC), application authorization, Single Sign-On (SSO), and IAM event investigation.
 
-The lab was performed in a controlled home-lab environment using test identities and locally hosted applications.
+The environment was built and tested in a controlled home lab.
 
 ---
 
 ## IAM Scenario
 
-A simulated organization required centralized identity and access management for Finance and IT Support users.
+A centralized IAM environment was created to simulate common enterprise identity and application-access requirements.
 
-The IAM environment needed to support:
+The environment included:
 
-- Centralized identity administration
-- Department-based group membership
+- Centralized identity management with Keycloak
+- Department-based groups
 - Role-Based Access Control
-- Least-privilege access
-- Controlled privileged access
-- Joiner-Mover-Leaver lifecycle management
-- Multi-Factor Authentication
-- OIDC-based application authentication
-- Role-based application authorization
-- Single Sign-On between applications
-- Failed-login troubleshooting
-- User event monitoring
-- Administrative audit logging
+- Standard and privileged access
+- Joiner-Mover-Leaver lifecycle changes
+- TOTP Multi-Factor Authentication
+- OpenID Connect application integration
+- Authorization based on identity claims
+- Single Sign-On across multiple applications
+- Authentication-event investigation
+- Administrative audit-event review
 
-A dedicated Keycloak realm was created to keep the enterprise lab identities and applications separate from the Keycloak `master` administrative realm.
+Two local test applications were used:
+
+- Finance Portal
+- Employee Portal
+
+The applications were created specifically to validate IAM authentication, authorization, and SSO behavior.
 
 ---
 
 ## IAM Workflow
 
-### 1. Keycloak Environment Setup
+### 1. Keycloak Realm
 
-Keycloak was installed on an Ubuntu Server virtual machine.
-
-The server was configured so that the Keycloak Administration Console could be accessed from the Windows host.
-
-The environment included:
-
-- Ubuntu Server
-- VirtualBox
-- Keycloak
-- OpenJDK
-- Windows browser access
-- Host-only management networking
-
-Keycloak was started in development mode for the isolated lab environment.
-
----
-
-### 2. Dedicated IAM Realm
-
-A dedicated realm was created:
+A dedicated Keycloak realm was created:
 
 ```text
 enterprise-iam-lab
 ```
 
-The realm contained the lab:
-
-- Users
-- Groups
-- Roles
-- OIDC clients
-- Authentication configuration
-- Sessions
-- User events
-- Administrative events
-
-This also demonstrated realm isolation between:
-
-```text
-master
-```
-
-and:
-
-```text
-enterprise-iam-lab
-```
+The realm was kept separate from the Keycloak `master` realm used for platform administration.
 
 ---
 
-### 3. Role-Based Access Control
+### 2. Role-Based Access Control
 
 Custom realm roles were created:
 
@@ -99,237 +62,158 @@ finance-admin
 it-support
 ```
 
-Department groups were also created:
+Two department groups were configured:
 
 ```text
 Finance
 IT-Support
 ```
 
-The Finance group received:
+Role mapping:
 
 ```text
-employee
-finance-user
+Finance
+├── employee
+└── finance-user
+
+IT-Support
+├── employee
+└── it-support
 ```
 
-The IT-Support group received:
+The privileged `finance-admin` role was intentionally kept separate from normal Finance group access.
 
-```text
-employee
-it-support
-```
-
-Users inherited standard department access through group membership instead of receiving every role directly.
+This allowed privileged access to be assigned directly only where required.
 
 ---
 
-### 4. Least-Privilege Access
+### 3. User and Access Validation
 
-Standard Finance users inherited:
+Multiple test identities were created to validate different access scenarios.
 
-```text
-employee
-finance-user
-```
+Examples included:
 
-The elevated role:
+- Standard Finance access through group membership
+- Standard IT Support access through group membership
+- Privileged Finance access through a direct administrator role
 
-```text
-finance-admin
-```
-
-was not assigned to the entire Finance group.
-
-It was assigned only to a selected privileged Finance identity.
-
-This demonstrated separation between:
-
-```text
-Standard Access
-```
-
-and:
-
-```text
-Privileged Access
-```
+Inherited and directly assigned roles were reviewed to verify effective access.
 
 ---
 
-### 5. Joiner-Mover-Leaver Lifecycle
+### 4. Joiner-Mover-Leaver Lifecycle
 
-A test employee identity was used to simulate the identity lifecycle.
+The identity lifecycle was tested using controlled user changes.
 
 #### Joiner
 
-The identity was created and assigned to the required department group.
+A new employee identity was created and assigned to the Finance group.
 
-The user inherited access automatically through the group.
+The user inherited the appropriate Finance roles through group membership.
 
 #### Mover
 
-The user was transferred from one department to another.
+The same identity was moved from Finance to IT-Support.
 
-The previous department membership was removed and the new department group was assigned.
+The old group membership was removed and the new group membership was assigned.
 
-This changed the user's effective access without manually maintaining individual department permissions.
+Effective access changed accordingly.
 
 #### Leaver
 
-The user account was disabled.
+The test identity was disabled, active sessions were reviewed, and remaining group access was removed.
 
-The following checks were also performed:
-
-- Active sessions reviewed
-- Department group membership removed
-- Remaining access reviewed
-
-This demonstrated controlled offboarding and access removal.
+This demonstrated the importance of removing access when an identity leaves the organization.
 
 ---
 
-### 6. Multi-Factor Authentication
+### 5. Multi-Factor Authentication
 
-TOTP-based MFA was configured for test users.
+TOTP-based Multi-Factor Authentication was configured and tested.
 
-The authentication process was verified as:
+The authentication flow required:
 
 ```text
 Username
-   ↓
+    ↓
 Password
-   ↓
-One-Time Code
-   ↓
+    ↓
+TOTP
+    ↓
 Authentication Successful
 ```
 
-The MFA enrollment process used an authenticator application.
-
-QR codes, OTP secrets, and live one-time codes were intentionally excluded from repository evidence.
+MFA enrollment and successful OTP authentication were verified without publishing QR codes, OTP secrets, or live one-time passwords.
 
 ---
 
-### 7. Finance Portal OIDC Integration
+### 6. OpenID Connect Integration
 
-A test Finance Portal was created using:
+A Flask-based Finance Portal was integrated with Keycloak using OpenID Connect.
 
-- Python
-- Flask
-- Authlib
+Client:
 
-The application was registered in Keycloak as an OpenID Connect client.
+```text
+finance-portal
+```
 
 The client used:
 
-```text
-Authorization Code Flow
-+
-PKCE S256
-```
+- OpenID Connect
+- Authorization Code Flow
+- PKCE S256
+- Public-client configuration
+- No client secret
 
-The Finance Portal authentication workflow was:
+The authentication flow was:
 
 ```text
-User
-   ↓
 Finance Portal
-   ↓
+      ↓
 Keycloak
-   ↓
-Password + MFA
-   ↓
+      ↓
+User Authentication
+      ↓
 Authorization Code
-   ↓
+      ↓
 Application Callback
-   ↓
+      ↓
 Token Exchange
-   ↓
-Authenticated Application Session
+      ↓
+Application Session
 ```
 
 ---
 
-### 8. Authentication vs Authorization
+### 7. Application Authorization
 
-The lab separately tested:
+Authentication and authorization were intentionally tested as separate controls.
 
-```text
-Authentication
-```
-
-and:
-
-```text
-Authorization
-```
-
-An IT Support user successfully authenticated through Keycloak.
-
-However, the user did not have the required:
+The Finance Portal required:
 
 ```text
 finance-user
 ```
 
-role.
+A user from the IT-Support group successfully authenticated through Keycloak but did not possess the required Finance role.
 
-The Finance Portal returned:
+Result:
 
 ```text
-Authentication Successful
-Access Denied
-Required Role: finance-user
+Authentication: Successful
+Authorization: Denied
+HTTP Status: 403
 ```
 
-This demonstrated that successful authentication does not automatically mean that a user is authorized to access every application.
+This demonstrated that successful authentication does not automatically mean that a user is authorized to access an application.
 
 ---
 
-### 9. OIDC Role Claim Troubleshooting
+### 8. OIDC Role-Claim Troubleshooting
 
-A Finance user had the correct role configured in Keycloak but initially still received:
+During testing, a Finance user had the correct Keycloak role but was initially denied application access.
 
-```text
-Access Denied
-```
-
-The investigation confirmed that:
-
-```text
-finance-user
-```
-
-was correctly assigned in Keycloak.
-
-The issue was that the application was not receiving the realm role through the expected OIDC claim.
-
-A User Realm Role protocol mapper was configured.
-
-The role claim was exposed through:
-
-```text
-realm_access.roles
-```
-
-The mapper was configured to include the role information in:
-
-- ID token
-- Access token
-- UserInfo
-
-After a new authentication session was created, the Finance Portal successfully detected the required role.
-
-The result became:
-
-```text
-Authentication Successful
-Authorization Successful
-Finance Portal Access Granted
-```
-
-This demonstrated troubleshooting across:
+The investigation followed the complete identity path:
 
 ```text
 User
@@ -343,261 +227,57 @@ OIDC Claim
 Application Authorization
 ```
 
----
+The Keycloak role assignment was correct, but the expected realm-role information was not available to the application in the required claim.
 
-### 10. Single Sign-On
-
-A second OIDC client and Flask application were created:
+A realm-role protocol mapper was configured so that roles were exposed through:
 
 ```text
-Employee Portal
+realm_access.roles
 ```
 
-The first application was:
+After a fresh authentication session, the Finance user was successfully authorized.
+
+This provided a practical example of troubleshooting an IAM issue where:
 
 ```text
-Finance Portal
+Identity configuration was correct
+        ↓
+Authentication succeeded
+        ↓
+Application still denied access
+        ↓
+Token / claim mapping investigated
+        ↓
+Authorization restored
 ```
-
-The user authenticated to the Finance Portal using Keycloak and MFA.
-
-The Employee Portal was then opened in the same browser session.
-
-Keycloak recognized the existing authenticated session.
-
-The user was not required to enter:
-
-- Username
-- Password
-- MFA code
-
-again.
-
-The Employee Portal successfully displayed the authenticated identity.
-
-This verified Single Sign-On across two separate OIDC applications.
 
 ---
 
-### 11. Failed Login Investigation
+### 9. Single Sign-On
+
+A second Flask application was created:
+
+```text
+employee-portal
+```
+
+Both applications trusted the same Keycloak realm.
+
+After authenticating to the Finance Portal, the Employee Portal was opened within the same browser session.
+
+Keycloak reused the existing authenticated session and no additional username, password, or MFA challenge was required.
+
+This validated Single Sign-On across the two applications.
+
+---
+
+### 10. Authentication Event Investigation
 
 Keycloak user-event logging was enabled.
 
-A controlled login failure was generated using an incorrect password.
+A controlled incorrect-password attempt was generated.
 
-The event log recorded:
-
-```text
-LOGIN_ERROR
-```
-
-The event details included:
-
-```text
-auth_method: openid-connect
-auth_type: code
-client: finance-portal
-error: invalid_user_credentials
-```
-
-Additional event information included the test identity, client, redirect URI, time, and source address.
-
-This demonstrated how IAM support teams can use Identity Provider events to investigate login problems.
-
----
-
-### 12. Administrative Auditing
-
-Administrative event logging was enabled.
-
-A temporary test realm role was created:
-
-```text
-audit-test-role
-```
-
-Keycloak recorded the administrative:
-
-```text
-CREATE
-```
-
-operation.
-
-The temporary role was then removed.
-
-Keycloak also recorded the:
-
-```text
-DELETE
-```
-
-operation.
-
-The audit trail demonstrated visibility into:
-
-- Administrative action
-- Resource type
-- Resource path
-- Time
-- Administrative identity
-
-The temporary role was removed after testing.
-
----
-
-## Key Tools and Techniques
-
-- Keycloak
-- Ubuntu Server
-- VirtualBox
-- OpenJDK
-- Identity and Access Management
-- User Administration
-- Group Administration
-- Role-Based Access Control
-- Least Privilege
-- Privileged Access Concepts
-- Joiner-Mover-Leaver Lifecycle
-- Multi-Factor Authentication
-- TOTP
-- OpenID Connect
-- OAuth 2.0 Concepts
-- Authorization Code Flow
-- PKCE
-- OIDC Claims
-- Protocol Mappers
-- Application Authorization
-- Single Sign-On
-- Python
-- Flask
-- Authlib
-- IAM Event Analysis
-- Administrative Auditing
-- Network Troubleshooting
-- Authentication Troubleshooting
-
----
-
-## IAM Validation Results
-
-### Realm Isolation
-
-The enterprise test identities were maintained in:
-
-```text
-enterprise-iam-lab
-```
-
-and were separate from the Keycloak administrative identities in:
-
-```text
-master
-```
-
----
-
-### RBAC Validation
-
-Finance users inherited:
-
-```text
-employee
-finance-user
-```
-
-from the Finance group.
-
-IT Support users inherited:
-
-```text
-employee
-it-support
-```
-
-from the IT-Support group.
-
-A privileged Finance identity additionally received:
-
-```text
-finance-admin
-```
-
-through direct role assignment.
-
----
-
-### Identity Lifecycle Validation
-
-The Joiner-Mover-Leaver workflow successfully demonstrated:
-
-```text
-Identity Creation
-        ↓
-Department Access Assignment
-        ↓
-Department Transfer
-        ↓
-Old Access Removal
-        ↓
-New Access Assignment
-        ↓
-Account Disablement
-        ↓
-Final Access Cleanup
-```
-
----
-
-### MFA Validation
-
-A user could not complete authentication using only a password after MFA had been configured.
-
-A valid TOTP one-time code was required.
-
----
-
-### OIDC Validation
-
-The Finance Portal successfully authenticated users through Keycloak.
-
-The application received the authentication response through its registered callback.
-
----
-
-### Authorization Validation
-
-IT Support user:
-
-```text
-Authentication: Successful
-Authorization: Failed
-Result: HTTP 403 Access Denied
-```
-
-Finance user:
-
-```text
-Authentication: Successful
-Authorization: Successful
-Result: Finance Portal Access Granted
-```
-
----
-
-### SSO Validation
-
-The Finance Portal and Employee Portal were registered as separate OIDC clients.
-
-After the Finance user authenticated to the first application, the second application reused the existing Keycloak SSO session.
-
-No second password or MFA challenge was required.
-
----
-
-### Event Validation
-
-A controlled incorrect-password test generated:
+The resulting event showed:
 
 ```text
 LOGIN_ERROR
@@ -609,138 +289,131 @@ with:
 invalid_user_credentials
 ```
 
-This confirmed that the authentication failure could be investigated through Keycloak user events.
+The event was reviewed to understand how failed authentication activity can be investigated using IAM logs.
 
 ---
 
-### Audit Validation
+### 11. Administrative Audit Events
 
-Administrative role creation and deletion produced recorded:
+Administrative event logging was enabled to record IAM configuration changes.
+
+A temporary test realm role was created and then deleted.
+
+The administrative audit trail recorded both:
 
 ```text
 CREATE
-```
-
-and:
-
-```text
 DELETE
 ```
 
 events.
 
-This confirmed that administrative IAM changes could be traced through Keycloak audit events.
+This demonstrated how IAM administrative changes can be reviewed for audit and troubleshooting purposes.
 
 ---
 
-## Troubleshooting Highlights
+## Key Tools and Techniques
 
-### Keycloak Browser Connectivity
-
-The Keycloak service was running, but the initial IP address used from the Windows host belonged to a different virtual network path.
-
-The VM and Windows host network configuration were reviewed and the correct host-only management interface was identified.
+- Keycloak
+- Identity and Access Management
+- Role-Based Access Control
+- Least Privilege
+- User and Group Administration
+- Joiner-Mover-Leaver Lifecycle
+- Multi-Factor Authentication
+- TOTP
+- OpenID Connect
+- OAuth 2.0 concepts
+- Authorization Code Flow
+- PKCE S256
+- Identity Claims
+- Application Authorization
+- Single Sign-On
+- User Event Investigation
+- Administrative Audit Events
+- Linux
+- Python
+- Flask
+- Authlib
+- IAM Troubleshooting
+- Access Validation
 
 ---
 
-### Administrative Session 401
+## IAM Validation Results
 
-A role-creation attempt returned:
+The lab successfully demonstrated the following scenarios:
+
+- Dedicated IAM realm created
+- Custom roles configured
+- Department groups configured
+- Group-based role inheritance verified
+- Privileged direct-role assignment verified
+- Joiner access provisioning tested
+- Mover access changes tested
+- Leaver account disabling and access removal tested
+- TOTP MFA enrollment and authentication verified
+- Finance Portal integrated using OIDC
+- PKCE S256 used with the public OIDC client
+- Successful authentication verified
+- Authentication-success / authorization-denied scenario verified
+- Realm-role claim issue identified and corrected
+- Finance application authorization verified
+- SSO across two applications verified
+- Controlled failed-login event investigated
+- Administrative CREATE and DELETE events reviewed
+
+A key troubleshooting lesson from the project was that application-access problems should be investigated across the complete identity chain rather than assuming that successful login means the access configuration is correct.
+
+The investigation path used was:
 
 ```text
-HTTP 401 Unauthorized
+User
+  ↓
+Account Status
+  ↓
+Group Membership
+  ↓
+Role Assignment
+  ↓
+Authentication
+  ↓
+MFA
+  ↓
+OIDC Client
+  ↓
+Claims
+  ↓
+Application Authorization
+  ↓
+Events / Audit Logs
 ```
-
-The administrative session was refreshed.
-
-The previously saved IAM configuration remained available and the operation succeeded after the session was renewed.
-
----
-
-### Python Virtual Environment
-
-The Python virtual environment initially failed because:
-
-```text
-python3.12-venv
-```
-
-was not installed.
-
-The required package was installed and the environment was recreated successfully.
-
----
-
-### Missing Python Dependency
-
-The Flask OIDC application initially returned:
-
-```text
-ModuleNotFoundError: No module named 'requests'
-```
-
-The missing package was installed inside the Python virtual environment.
-
----
-
-### Python Indentation Error
-
-An authorization code block produced an:
-
-```text
-IndentationError
-```
-
-The affected code was reviewed by line number, corrected, and verified before the application was restarted.
-
----
-
-### Missing OIDC Role Claim
-
-The Finance user had the required IAM role but the Finance Portal still denied access.
-
-The issue was traced to the role not being exposed to the application through the expected OIDC claim.
-
-The User Realm Role protocol mapper resolved the issue.
 
 ---
 
 ## Evidence
 
-Sanitized screenshots documenting the IAM implementation are available in:
+Sanitized screenshots documenting the IAM implementation and validation are available in:
 
 [`Screenshots/`](Screenshots/)
 
 The evidence set covers:
 
 - Realm creation
-- Custom IAM roles
-- Department groups
-- Group role mapping
-- Inherited user access
-- Privileged direct role assignment
+- Role configuration
+- Group-role mapping
+- Role inheritance
+- Privileged access
 - Joiner-Mover-Leaver lifecycle
-- MFA enforcement
-- Finance Portal
+- MFA
 - OIDC authentication
 - Authorization denial
-- Successful Finance authorization
-- Single Sign-On
-- Failed-login investigation
+- Successful application authorization
+- SSO
+- Authentication-event investigation
 - Administrative audit events
 
-Screenshots intended for the public repository are reviewed before upload.
-
-The repository does not intentionally expose:
-
-- Passwords
-- MFA QR codes
-- OTP secrets
-- One-time codes
-- Authentication tokens
-- Session identifiers
-- Personal information
-- Unnecessary internal system information
+Screenshots intended for the public repository were reviewed and sanitized before publication.
 
 ---
 
@@ -750,7 +423,7 @@ Detailed technical documentation is maintained in:
 
 [`Documentation/Enterprise-IAM-Support.md`](Documentation/Enterprise-IAM-Support.md)
 
-The detailed documentation contains the environment setup, IAM configuration, practical steps, authentication and authorization workflow, OIDC application integration, SSO testing, troubleshooting, verification results, evidence, and lessons learned during the project.
+The detailed documentation contains the implementation steps, IAM concepts, configuration decisions, troubleshooting process, validation results, evidence references, and lessons learned during the project.
 
 Additional project components are maintained in:
 
@@ -758,82 +431,53 @@ Additional project components are maintained in:
 - [`Applications/`](Applications/)
 - [`Screenshots/`](Screenshots/)
 
+The application directory contains the sanitized source used for the Finance Portal and Employee Portal test applications.
+
 ---
 
 ## Skills Demonstrated
 
 - Identity and Access Management
 - Keycloak Administration
-- User Administration
-- Group Administration
+- User Lifecycle Management
 - Role-Based Access Control
-- Least Privilege
-- Privileged Access Concepts
-- Access Provisioning
-- Access Revocation
-- Joiner-Mover-Leaver Lifecycle
-- Authentication
-- Authorization
+- Least-Privilege Access
+- Group-Based Access Management
+- Privileged Role Assignment
 - Multi-Factor Authentication
 - TOTP
 - OpenID Connect
 - OAuth 2.0 Concepts
-- Authorization Code Flow
 - PKCE
-- OIDC Client Configuration
-- Redirect URI Configuration
-- OIDC Claims
-- Protocol Mappers
-- Application Authorization
+- Identity Claims
+- Authentication Troubleshooting
+- Authorization Troubleshooting
+- Application Access Control
 - Single Sign-On
-- IAM Troubleshooting
-- Login Failure Investigation
-- Event Analysis
+- Identity Event Investigation
 - Administrative Audit Logging
-- Basic Python
-- Flask
-- Authlib
 - Linux Administration
-- Basic Network Troubleshooting
+- Python
+- Flask
+- Technical Troubleshooting
+- Evidence Collection
 - Technical Documentation
 
 ---
 
 ## Outcome
 
-The project demonstrated a complete enterprise-style IAM support workflow using Keycloak.
+The project successfully demonstrated a practical enterprise-style IAM workflow covering identity creation, access assignment, lifecycle changes, strong authentication, application integration, authorization, SSO, event investigation, and administrative auditing.
 
-The final lab successfully implemented and validated:
+The lab also demonstrated an important IAM support principle:
 
 ```text
-Identity Administration
-        ↓
-Groups and Roles
-        ↓
-RBAC
-        ↓
-Least Privilege
-        ↓
-Joiner-Mover-Leaver
-        ↓
-MFA
-        ↓
-OIDC + PKCE
-        ↓
-Authentication
-        ↓
-Role-Based Authorization
-        ↓
-SSO
-        ↓
-User Event Investigation
-        ↓
-Administrative Auditing
+Successful Authentication ≠ Successful Authorization
 ```
 
-The project also demonstrated structured troubleshooting by identifying and resolving authentication, networking, application dependency, OIDC claim, and authorization issues.
+Access issues may exist at multiple layers including account status, group membership, role assignment, identity claims, application configuration, and authorization logic.
 
-Most importantly, the lab provided practical IAM support experience rather than only theoretical identity and access management knowledge.
+The project therefore focused not only on configuring IAM controls, but also on understanding how to systematically investigate and troubleshoot identity and application-access problems.
 
 ---
 
@@ -842,9 +486,11 @@ Most importantly, the lab provided practical IAM support experience rather than 
 - **Repository:** Enterprise-IAM-Support-Lab
 - **Section:** 01-Enterprise-IAM-Support
 - **Lab:** Enterprise IAM Support & Identity Security Lab
+- **Documentation:** Documentation/Enterprise-IAM-Support.md
+- **Architecture:** Architecture/
+- **Applications:** Applications/
+- **Screenshots:** Screenshots/
 - **Status:** Completed
 - **Environment:** Controlled Home Lab
-- **Identity Platform:** Keycloak
-- **Applications:** Finance Portal, Employee Portal
-- **Protocols:** OpenID Connect, OAuth 2.0 / PKCE
+- **Platforms:** Keycloak, Linux, Python, Flask, OIDC
 - **Version:** 1.0
