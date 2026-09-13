@@ -25,3 +25,12 @@ This directory contains sanitized evidence captured during the Enterprise IAM Su
 | 17 | `17-login-error-event-troubleshooting.jpg` | Keycloak user-event investigation showing a controlled `LOGIN_ERROR` caused by invalid credentials. |
 | 18 | `18-admin-event-role-created.jpg` | Administrative audit event showing creation of the temporary test realm role. |
 | 19 | `19-admin-event-create-delete-audit.jpg` | Administrative audit trail showing both creation and deletion of the temporary test role. |
+
+
+## Evidence Handling
+
+Screenshots included in this repository have been reviewed and sanitized before publication.
+
+Sensitive or unnecessary information such as passwords, MFA secrets, one-time codes, authentication tokens, session identifiers, personal information, local usernames, hostnames, and unnecessary internal network details is not intentionally exposed.
+
+Original lab evidence is retained locally and is not included in this public repository.
